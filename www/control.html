@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Lightboard</title>
+  <meta name="viewport" content="width=device-width">
+  <style type="text/css">
+  body {
+    font-family: Helvetica Neue, Helvetica, Arial, sans-serif;
+    margin: 0;
+  }
+  ul {
+    list-style-type: none;
+    margin: 0;
+    padding: 0 20px;
+  }
+  a {
+    text-decoration: none;
+  }
+  .mode-button {
+    background: #ddd;
+    border-radius: 5px;
+    color: #333;
+    display: block;
+    font-size: 48px;
+    font-weight: 100;
+    margin-top: 20px;
+    padding: 20px;
+    text-align: center;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    user-select: none;
+  }
+  #sizes, #colors {
+    margin-top: 20px;
+    padding: 0;
+    text-align: center;
+  }
+  #sizes li, #colors li {
+    background: #ddd;
+    border-radius: 5px;
+    display: inline-block;
+    margin-right: 4px;
+    vertical-align: top;
+  }
+  #sizes li:last-child, #colors li:last-child {
+    margin-right: 0;
+  }
+  .size-button, .color-button {
+    background-repeat: no-repeat;
+    background-position: center;
+    display: block;
+  }
+  .size-button {
+    height: 50px;
+    width: 50px;
+  }
+  .color {
+    border-radius: 3px;
+    width: 30px;
+    height: 30px;
+    margin: 10px 10px;
+  }
+  .active {
+    background: #ffa200 !important;
+    color: #fff;
+  }
+  </style>
+</head>
+<body>
+  <ul id="sizes">
+    <li><a href="#" class="size-button" style="background-image:url(2.png)" data-val="1"></a></li>
+    <li><a href="#" class="size-button" style="background-image:url(4.png)" data-val="2"></a></li>
+    <li><a href="#" class="size-button" style="background-image:url(7.png)" data-val="4"></a></li>
+    <li><a href="#" class="size-button" style="background-image:url(11.png)" data-val="6"></a></li>
+    <li><a href="#" class="size-button" style="background-image:url(15.png)" data-val="10"></a></li>
+  </ul>
+  <ul id="colors">
+    <li><a href="#" class="color-button" data-val=""><div class="color" style="background:#000"></div></a></li>
+    <li><a href="#" class="color-button" data-val=""><div class="color" style="background:red"></div></a></li>
+    <li><a href="#" class="color-button" data-val=""><div class="color" style="background:green"></div></a></li>
+    <li><a href="#" class="color-button" data-val=""><div class="color" style="background:blue"></div></a></li>
+    <li><a href="#" class="color-button" data-val=""><div class="color" style="background:purple"></div></a></li>
+  </ul>
+  <ul>
+    <li href="#" class="mode-button" id="draw_btn">Draw</li>
+    <li href="#" class="mode-button" id="erase_btn">Erase</li>
+  </ul>
+  <script type="text/javascript" src="https://cdn.firebase.com/v0/firebase.js"></script>
+  <script type="text/javascript">
+  var draw_btn = document.getElementById("draw_btn");
+  var erase_btn = document.getElementById("erase_btn");
+  var lb_firebase = new Firebase(
+      "https://lightboard.firebaseIO.com");
+  var room = lb_firebase.child("hackmit");
+  room.child("mode").on("value", function(data) {
+    draw_btn.className = "mode-button ";
+    erase_btn.className = "mode-button ";
+    switch (data.val()) {
+      case "draw":
+        draw_btn.className += "active";
+        break;
+      case "erase":
+        erase_btn.className += "active";
+        break;
+      default:
+        break;
+    }
+  });
+  // draw_btn.onclick = function() {
+  //   if (draw_btn.className.indexOf("active") >= 0) {
+  //     room.child("mode").set("idle");
+  //   } else {
+  //     room.child("mode").set("draw");
+  //   }
+  // };
+  draw_btn.ontouchstart = function() {
+    room.child("mode").set("draw");
+  };
+  draw_btn.ontouchend = function() {
+    room.child("mode").set("idle");
+  };
+  // erase_btn.onclick = function() {
+  //   if (erase_btn.className.indexOf("active") >= 0) {
+  //     room.child("mode").set("idle");
+  //   } else {
+  //     room.child("mode").set("erase");
+  //   }
+  // };
+  erase_btn.ontouchstart = function() {
+    room.child("mode").set("erase");
+  };
+  erase_btn.ontouchend = function() {
+    room.child("mode").set("idle");
+  };
+  var i;
+  var size_buttons = document.getElementsByClassName("size-button");
+  var sizes = [2,4,7,11,15];
+  room.child("size").on("value", function(data) {
+    for (i = 0; i < sizes.length; ++i) {
+      if (sizes[i] === data.val()) {
+        size_buttons[i].parentNode.className = "active";
+      } else {
+        size_buttons[i].parentNode.className = "";
+      }
+    }
+  });
+  for (i = 0; i < size_buttons.length; ++i) {
+    (function() {
+      var ii = i;
+      size_buttons[i].onclick = function() {
+        room.child("size").set(sizes[ii]);
+      };
+    })();
+  }
+  var color_buttons = document.getElementsByClassName("color-button");
+  var colors = ["#000", "red", "green", "blue", "purple"];
+  room.child("color").on("value", function(data) {
+    for (i = 0; i < colors.length; ++i) {
+      if (colors[i] === data.val()) {
+        color_buttons[i].parentNode.className = "active";
+      } else {
+        color_buttons[i].parentNode.className = "";
+      }
+    }
+  });
+  for (i = 0; i < color_buttons.length; ++i) {
+    (function() {
+      var ii = i;
+      color_buttons[i].onclick = function() {
+        room.child("color").set(colors[ii]);
+      };
+    })();
+  }
+  </script>
+</body>
+</html>
